@@ -1,0 +1,14 @@
+[package]
+name = "hnrs"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+color-eyre = "0.6.3"
+crossterm = "0.28.1"
+ratatui = "0.29.0"
+reqwest = { version = "0.12.22", features = ["blocking", "json"] }
+tokio = { version = "1", features = ["full"] }
+anyhow = "1.0.100"
+serde = { version = "1.0.225", features = ["derive"] }
+html2text = "0.15.5"
