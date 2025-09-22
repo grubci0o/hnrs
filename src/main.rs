@@ -1,7 +1,14 @@
 mod api;
+mod tui;
 
+use std::io;
 use std::io::Read;
+use crossterm::execute;
+use crossterm::terminal::{disable_raw_mode, enable_raw_mode, EnterAlternateScreen, LeaveAlternateScreen};
+use ratatui::backend::CrosstermBackend;
+use ratatui::Terminal;
 use api::HNApi;
+use tui::App;
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
@@ -12,5 +19,15 @@ async fn main() -> anyhow::Result<()> {
     let first_story = api.fetch_item(ids[0]).await?;
     println!("First story: {:?}", first_story.text);
 
-    Ok(())
+    enable_raw_mode()?;
+    let mut stdout = io::stdout();
+    execute!(stdout, EnterAlternateScreen);
+    let backend = CrosstermBackend::new(stdout);
+    let mut terminal = Terminal::new(backend)?;
+    let mut app = App::new();
+    let res = app.run(&mut terminal);
+    disable_raw_mode()?;
+    execute!(terminal.backend_mut(), LeaveAlternateScreen)?;
+    terminal.show_cursor()?;
+    res
 }

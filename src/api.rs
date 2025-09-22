@@ -18,7 +18,18 @@ pub struct CommentNode {
     pub item: Option<HNItem>,
     pub children: Vec<CommentNode>,
 }
-
+impl CommentNode {
+    pub fn placeholder(id: u64, depth: usize) -> Self {
+        Self{
+            id,
+            depth,
+            expanded: false,
+            loading: false,
+            item: None,
+            children: vec![],
+        }
+    }
+}
 #[derive(Debug, Deserialize, Clone)]
 pub struct HNItem {
     pub id: u64,
@@ -86,9 +97,9 @@ impl HNApi {
         node.loading = true;
 
         if node.item.is_none() {
-            match self.fetch_comment(node.id, width) {
+            match self.fetch_comment(node.id, width).await {
                 Ok(item) => {
-                    node.item = item;
+                    node.item = Some(item);
                 }
                 Err(e) => {
                     node.loading = false;
@@ -114,15 +125,3 @@ impl HNApi {
     }
 }
 
-impl CommentNode {
-    pub fn placeholder(id: u64, depth: usize) -> Self {
-        Self{
-            id,
-            depth,
-            expanded: false,
-            loading: false,
-            item: None,
-            children: vec![],
-        }
-    }
-}
