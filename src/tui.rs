@@ -1,4 +1,4 @@
-use crate::api::HNItem;
+use crate::api::{HNApi, HNItem};
 use anyhow::Result;
 use crossterm::event;
 use crossterm::event::{Event, KeyCode, KeyEvent, KeyEventKind};
@@ -6,7 +6,7 @@ use ratatui::buffer::Buffer;
 use ratatui::layout::{Constraint, Direction, Layout, Rect};
 use ratatui::prelude::Widget;
 use ratatui::style::palette::tailwind::SLATE;
-use ratatui::style::{Modifier, Style, Stylize};
+use ratatui::style::{Color, Modifier, Style, Stylize};
 use ratatui::symbols::border;
 use ratatui::text::Line;
 use ratatui::widgets::StatefulWidget;
@@ -14,6 +14,15 @@ use ratatui::widgets::{Block, HighlightSpacing, List, ListItem, ListState, Parag
 use ratatui::DefaultTerminal;
 const SELECTED_STYLE: Style = Style::new().bg(SLATE.c800).add_modifier(Modifier::BOLD);
 
+struct Theme {
+    bg: Color,
+    story_title: Color,
+    selected_bg: Color,
+    author: Color,
+    comment_text: Color,
+    collapsed_marker: Color,
+    footer: Color,
+}
 #[derive(Debug, Default)]
 enum Mode {
     #[default]
@@ -29,6 +38,7 @@ pub struct Detail {
 #[derive(Debug, Default)]
 pub struct App {
     stories: Vec<HNItem>,
+    client: HNApi,
     stories_state: ListState,
     detail: Detail,
     exit: bool,
@@ -36,11 +46,13 @@ pub struct App {
 }
 
 impl App {
-    pub fn new() -> Self {
+    pub fn new(client: HNApi, top_stories: Vec<HNItem>) -> Self {
         let mut ls = ListState::default();
         ls.select(Some(0));
+        //just for test
         Self {
-            stories: mock_hnstories(),
+            stories: top_stories,
+            client,
             stories_state: ls,
             detail: Default::default(),
             exit: false,
@@ -117,7 +129,12 @@ impl Widget for &mut App {
         let title = Line::from(" HN Stories ".bold());
         let header_block = Block::bordered()
             .title(title.centered())
-            .border_set(border::THICK);
+            .border_set(border::THICK)
+            .style(
+                Style::default()
+                    .fg(Color::Black)
+                    .bg(Color::Rgb(255,140,0))
+            );
 
         Paragraph::new("")
             .block(header_block)

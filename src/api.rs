@@ -2,8 +2,10 @@ use reqwest::Client;
 use anyhow::Result;
 use serde::Deserialize;
 use html2text::from_read;
+use futures::stream::{self, StreamExt};
 
 static HN_TOP_IDS_URL:&'static str = "https://hacker-news.firebaseio.com/v0";
+#[derive(Debug, Default, Clone)]
 pub struct HNApi {
     client: Client,
     base_url: &'static str,
@@ -67,6 +69,25 @@ impl HNApi {
         let url = format!("{}/item/{id}.json", self.base_url);
         let item = self.client.get(url).send().await?.json::<HNItem>().await?;
         Ok(item)
+    }
+
+    pub async fn fetch_top_stories(&self) -> Result<Vec<HNItem>> {
+        let limit = 20usize;
+        let top_ids = self.fetch_top_ids().await?;
+        let api = self.clone();
+        let concurrency = 5;
+
+        let stories = stream::iter(top_ids.into_iter().take(limit).map(move |id|
+            {
+                let api = api.clone();
+                async move {api.fetch_item(id).await.ok()}
+            }))
+            .buffer_unordered(concurrency)
+            .filter_map(|opt| async move {opt})
+            .collect::<Vec<_>>()
+            .await;
+
+        Ok(stories)
     }
 
     pub async fn fetch_comment(&self, id: u64, terminal_width: usize) -> Result<HNItem> {

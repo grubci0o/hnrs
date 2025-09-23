@@ -12,3 +12,4 @@ tokio = { version = "1", features = ["full"] }
 anyhow = "1.0.100"
 serde = { version = "1.0.225", features = ["derive"] }
 html2text = "0.15.5"
+futures = "0.3.31"

@@ -1,6 +1,7 @@
 mod api;
 mod tui;
 
+use std::ffi::c_long;
 use std::io;
 use std::io::Read;
 use crossterm::execute;
@@ -24,7 +25,8 @@ async fn main() -> anyhow::Result<()> {
     execute!(stdout, EnterAlternateScreen);
     let backend = CrosstermBackend::new(stdout);
     let mut terminal = Terminal::new(backend)?;
-    let mut app = App::new();
+    let top_stories = api.fetch_top_stories().await?;
+    let mut app = App::new(api, top_stories);
     let res = app.run(&mut terminal);
     disable_raw_mode()?;
     execute!(terminal.backend_mut(), LeaveAlternateScreen)?;
