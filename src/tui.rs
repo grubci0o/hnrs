@@ -1,5 +1,6 @@
 use crate::api::{HNApi, HNItem};
 use anyhow::Result;
+use color_eyre::owo_colors::OwoColorize;
 use crossterm::event;
 use crossterm::event::{Event, KeyCode, KeyEvent, KeyEventKind};
 use ratatui::buffer::Buffer;
@@ -45,6 +46,21 @@ pub struct App {
     mode: Mode
 }
 
+enum ScrollDirection {
+    Up,
+    Down,
+}
+
+impl ScrollDirection {
+    fn from_char(c: char) -> Option<Self> {
+        match c {
+            'j' => Some(ScrollDirection::Up),
+            'k' => Some(ScrollDirection::Down),
+            _ => None
+        }
+    }
+}
+
 impl App {
     pub fn new(client: HNApi, top_stories: Vec<HNItem>) -> Self {
         let mut ls = ListState::default();
@@ -83,12 +99,30 @@ impl App {
     fn handle_key_event(&mut self, key_event: KeyEvent) {
         match key_event.code {
             KeyCode::Char('q') => self.exit(),
+            KeyCode::Char(c) if c == 'j' || c == 'k' => {
+                if let Some(direction) = ScrollDirection::from_char(c) {
+                    self.scroll(direction);
+                }
+            }
+            KeyCode::Enter => self.show_story(),
             _ => {}
         }
     }
 
     fn exit(&mut self) {
         self.exit = true;
+    }
+
+    fn show_story(&mut self) {
+
+        todo!()
+    }
+
+    fn scroll(&mut self, direction: ScrollDirection) {
+        match direction {
+            ScrollDirection::Up => self.stories_state.scroll_up_by(1),
+            ScrollDirection::Down =>self.stories_state.scroll_down_by(1),
+        }
     }
 
     pub fn render_story_list(&mut self, area: Rect, buf: &mut Buffer) {
